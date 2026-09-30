@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>리코MBA 입학경로 지도</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: 단일 리포트 컬럼(최대 1120px) — 요약 수치 → 경로 지도 → 교차점·경로 유효성 → 시사점 → 모집전략 → 응답 원자료 */
+:root{
+  --bg:#f7f7f4; --surface:#ffffff; --ink:#15212e; --ink-2:#4b5563; --ink-3:#7b8491;
+  --line:#e2e3dd; --node:#223244; --node-ink:#ffffff;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --hl:#fff4d6; --hl-ink:#7a4d00;
+  --f-display:"Noto Serif KR","Nanum Myeongjo",Georgia,serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171d; --surface:#1a2129; --ink:#eef1f4; --ink-2:#b7bec7; --ink-3:#8a939e;
+  --line:#2c3540; --node:#d8dee6; --node-ink:#12171d;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --hl:#3a2f12; --hl-ink:#f5d58a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171d; --surface:#1a2129; --ink:#eef1f4; --ink-2:#b7bec7; --ink-3:#8a939e;
+  --line:#2c3540; --node:#d8dee6; --node-ink:#12171d;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --hl:#3a2f12; --hl-ink:#f5d58a; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.65}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:40px 64px;display:grid;gap:48px}
+h1,h2{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:clamp(26px,4vw,36px)}
+h2{font-size:22px}
+h3{font-size:16px;margin:0 0 6px}
+p{margin:0}
+.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--ink-3);font-weight:600}
+.lede{color:var(--ink-2);max-width:68ch;margin-top:10px}
+.sec{display:grid;gap:18px;min-width:0}
+.sec-head{display:grid;gap:6px}
+.note{font-size:13px;color:var(--ink-3)}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
+.kpi{padding:16px 16px 18px 0;display:grid;gap:4px;min-width:0}
+.kpi + .kpi{padding-left:16px;border-left:1px solid var(--line)}
+.kpi b{font-family:var(--f-mono);font-size:30px;font-weight:500;line-height:1.1}
+.kpi span{font-size:13px;color:var(--ink-2)}
+@media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:nth-child(3){padding-left:0;border-left:0}.kpi:nth-child(n+3){border-top:1px solid var(--line)}}
+
+/* Sankey */
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px;min-width:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.toolbar button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.toolbar button:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ink-2);margin-left:auto}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.scroll{overflow-x:auto}
+svg#sankey{display:block;min-width:900px;width:100%;height:auto}
+.band{transition:opacity .2s}
+.dim .band.off{opacity:.08}
+.node-label{font-size:13px;font-weight:600;fill:var(--node-ink)}
+.node-count{font-family:var(--f-mono);font-size:12px;fill:var(--node-ink);opacity:.8}
+.col-head{font-size:12px;font-weight:600;fill:var(--ink-3);letter-spacing:.04em}
+.col-q{font-size:11px;fill:var(--ink-3)}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;padding:8px 10px;border-radius:6px;max-width:280px;z-index:10;line-height:1.5}
+.cap{font-size:13px;color:var(--ink-2)}
+@media (prefers-reduced-motion:reduce){.band{transition:none}}
+
+/* Paths table */
+.tbl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--ink-3);font-weight:600;letter-spacing:.04em}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+.bar{display:inline-block;height:8px;border-radius:0 4px 4px 0;background:var(--ink-2);vertical-align:middle;margin-right:8px}
+.pill{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.pill.core{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pill.hub{background:var(--hl);color:var(--hl-ink);border-color:transparent}
+.route{white-space:nowrap}
+.route i{font-style:normal;color:var(--ink-3);margin:0 4px}
+
+/* Crossing */
+.cross{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:860px){.cross{grid-template-columns:1fr}}
+.cross article{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:8px;align-content:start;min-width:0}
+.cross .tag{font-size:12px;font-weight:600;color:var(--hl-ink);background:var(--hl);justify-self:start;padding:2px 8px;border-radius:4px}
+.cross p{font-size:14px;color:var(--ink-2)}
+
+/* Insights & strategy */
+.insights{display:grid;gap:0;border-top:2px solid var(--ink)}
+.ins{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;padding:18px 0;border-bottom:1px solid var(--line)}
+.ins .n{font-family:var(--f-mono);color:var(--ink-3);font-size:14px;padding-top:2px}
+.ins p{color:var(--ink-2);max-width:72ch}
+.ins q{color:var(--ink);font-style:normal}
+.strat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.strat{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:10px;align-content:start;min-width:0}
+.card .who{font-size:12px;color:var(--ink-3);font-weight:600;letter-spacing:.04em}
+.card ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:14px;display:grid;gap:4px}
+.card .kpi-line{font-size:13px;border-top:1px dashed var(--line);padding-top:10px;color:var(--ink-2)}
+.card .kpi-line b{color:var(--ink);font-weight:600}
+.limits{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;font-size:14px;color:var(--ink-2);display:grid;gap:8px}
+.limits ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">국민대 경영대학원 리더십과코칭MBA · 30기(가을) 신입생 설문 · n=10</div>
+    <h1>리코MBA 입학경로 지도</h1>
+    <p class="lede">신입생 10명이 리코MBA를 알게 된 경로부터 입학을 결정하기까지의 흐름을 화살표로 이었습니다. 화살표 굵기는 그 경로를 지난 인원 수입니다. 색은 처음 정보를 얻은 채널을 끝까지 따라갑니다.</p>
+  </header>
+
+  <section class="kpis" aria-label="핵심 수치">
+    <div class="kpi"><b>7<small class="num" style="font-size:16px">/10</small></b><span>지인을 통해 처음 정보를 얻음</span></div>
+    <div class="kpi"><b>6<small class="num" style="font-size:16px">/7</small></b><span>지인으로 시작해 지인 추천으로 결정 (86%)</span></div>
+    <div class="kpi"><b>4<small class="num" style="font-size:16px">/4</small></b><span>지인 단독 경로가 아닌 입학생은 모두 홈페이지를 거침</span></div>
+    <div class="kpi"><b>3<small class="num" style="font-size:16px">/3</small></b><span>지인 외 채널로 유입된 입학생 전원이 장학·학비를 건의</span></div>
+  </section>
+
+  <section class="sec" aria-labelledby="map-h">
+    <div class="sec-head">
+      <h2 id="map-h">입학경로 흐름</h2>
+      <p class="note">설문 1번(정보 획득) → 2번(결정적 영향) → 3번(결정 이유, 주관식을 유형화) → 4번(건의사항, 유형화). 경로에 마우스를 올리면 해당 입학생들의 전체 여정이 강조됩니다.</p>
+    </div>
+    <div class="chart">
+      <div class="toolbar" role="group" aria-label="경로 강조">
+        <button type="button" id="f-all" data-f="all" aria-pressed="true">전체</button>
+        <button type="button" id="f-core" data-f="core" aria-pressed="false">핵심 경로: 지인 → 지인</button>
+        <button type="button" id="f-hub" data-f="hub" aria-pressed="false">홈페이지 경유</button>
+        <button type="button" id="f-ext" data-f="ext" aria-pressed="false">지인 외 채널 유입</button>
+        <div class="legend" aria-label="색 범례: 처음 정보를 얻은 채널">
+          <span><i style="background:var(--s1)"></i>지인에서 시작</span>
+          <span><i style="background:var(--s2)"></i>홈페이지에서 시작</span>
+          <span><i style="background:var(--s3)"></i>HR insight에서 시작</span>
+        </div>
+      </div>
+      <div class="scroll"><svg id="sankey" viewBox="0 0 1120 470" role="img" aria-label="입학경로 산키 다이어그램"></svg></div>
+      <p class="cap" id="cap">전체 10명의 경로입니다.</p>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="cross-h">
+    <div class="sec-head">
+      <h2 id="cross-h">교차하는 지점</h2>
+      <p class="note">서로 다른 경로가 만나거나 갈라지는 곳입니다. 모집 활동을 집중했을 때 여러 경로에 동시에 효과가 나는 자리입니다.</p>
+    </div>
+    <div class="cross">
+      <article>
+        <span class="tag">교차점 1 · 가장 중요</span>
+        <h3>대학원 홈페이지</h3>
+        <p>지인 단독 경로 밖의 4명이 모두 이곳을 지납니다. 두 명은 지인·HR 매체로 알게 된 뒤 홈페이지에서 결정했고, 두 명은 홈페이지로 알게 된 뒤 상담이나 HR 매체로 넘어가 결정했습니다. 인지 채널이자 검증 채널로 양방향 역할을 합니다.</p>
+        <p><q>전공, 졸업요건 등에 대해 자세하게 설명이 되어 있어서 도움이 많이 됐습니다.</q></p>
+      </article>
+      <article>
+        <span class="tag">교차점 2</span>
+        <h3>지인에서 갈라지는 분기</h3>
+        <p>지인으로 알게 된 7명 중 6명은 추천만으로 결정했고, 1명은 홈페이지 등으로 “여러 방면으로 알아본” 뒤 결정했습니다. 추천이 있어도 공식 정보로 확인하려는 수요가 있습니다.</p>
+        <p><q>지인을 통해 처음 알게 됐고 결정하기까지는 여러 방면으로 알아봤습니다.</q></p>
+      </article>
+      <article>
+        <span class="tag">교차점 3</span>
+        <h3>입학상담 (교수 1:1)</h3>
+        <p>처음 알게 된 경로로 꼽은 사람은 없지만, 홈페이지로 들어온 1명의 결정을 마무리했습니다. 인지 단계가 아니라 마지막 망설임을 해소하는 단계에서 효과가 나는 채널입니다.</p>
+        <p><q>고민하고 있던 부분을 고현숙 교수님과 상담하면서 해소되었음</q></p>
+      </article>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="path-h">
+    <div class="sec-head">
+      <h2 id="path-h">경로별 유효성</h2>
+      <p class="note">입학생 기여도(그 경로로 들어온 인원 비율)와 자기완결성(다른 채널 도움 없이 결정까지 간 정도)으로 판단했습니다. 미등록 지원자 자료가 없어 실제 전환율은 계산할 수 없습니다.</p>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>경로 (정보 획득 → 결정)</th><th class="r">인원</th><th>입학생 기여도</th><th>경로의 역할</th><th>결정 이유</th><th>판단</th></tr></thead>
+        <tbody>
+          <tr><td class="route">지인<i>→</i>지인</td><td class="r num">6</td><td><span class="bar" style="width:120px"></span><span class="num">60%</span></td><td>인지부터 결정까지 한 번에</td><td>동문·재학생의 실제 경험, 신뢰하는 사람의 추천</td><td><span class="pill core">핵심 경로</span></td></tr>
+          <tr><td class="route">지인<i>→</i>홈페이지</td><td class="r num">1</td><td><span class="bar" style="width:20px"></span><span class="num">10%</span></td><td>추천 후 공식 정보로 검증</td><td>여러 방면으로 교차 확인</td><td><span class="pill hub">홈페이지 경유</span></td></tr>
+          <tr><td class="route">HR insight<i>→</i>홈페이지</td><td class="r num">1</td><td><span class="bar" style="width:20px"></span><span class="num">10%</span></td><td>외부 매체 인지 후 검증</td><td>전공·졸업요건의 상세 설명</td><td><span class="pill hub">홈페이지 경유</span></td></tr>
+          <tr><td class="route">홈페이지<i>→</i>입학상담</td><td class="r num">1</td><td><span class="bar" style="width:20px"></span><span class="num">10%</span></td><td>상담으로 결정 마무리</td><td>교수 상담으로 해소</td><td><span class="pill hub">홈페이지 경유</span></td></tr>
+          <tr><td class="route">홈페이지<i>→</i>HR insight</td><td class="r num">1</td><td><span class="bar" style="width:20px"></span><span class="num">10%</span></td><td>업무 연관성 확인</td><td>업무와 접목할 수 있는지</td><td><span class="pill hub">홈페이지 경유</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="ins-h">
+    <div class="sec-head"><h2 id="ins-h">시사점</h2></div>
+    <div class="insights">
+      <div class="ins"><span class="n">1</span><div><h3>리코MBA 모집은 사실상 추천으로 움직입니다</h3><p>10명 중 7명이 지인으로 처음 알게 됐고 6명은 추천만으로 결정했습니다. 추천인은 27기 동문 코치, 먼저 다니고 있는 갤럽 강점코치 동기처럼 이미 리코를 경험한 사람들입니다. 재학생과 동문 한 명 한 명이 가장 효율이 높은 모집 채널입니다.</p></div></div>
+      <div class="ins"><span class="n">2</span><div><h3>홈페이지는 모든 비추천 경로가 만나는 검증 허브입니다</h3><p>추천 경로 밖의 4명 전원이 홈페이지를 거쳤습니다. 추천을 받은 사람도 확인하러 들어옵니다. 홈페이지는 광고판보다 의사결정 도구로 설계해야 합니다. 전공 구성, 졸업요건, 장학, 상담 예약이 한 흐름으로 이어져야 합니다.</p></div></div>
+      <div class="ins"><span class="n">3</span><div><h3>추천 밖에서 온 지원자는 비용에 민감합니다</h3><p>지인 외 채널(홈페이지, HR 매체)로 유입된 3명은 모두 장학제도나 학비 감면을 건의했습니다. 지인으로 시작한 7명 중에는 한 명도 없습니다. 추천인이 비용 걱정을 미리 해소해 주는 것으로 보입니다. 외부 유입을 늘리려면 장학 정보가 입학 전에 보여야 합니다. <q>장학제도에 대한 상세소개가 사전에 되면 좋을 듯합니다.</q></p></div></div>
+      <div class="ins"><span class="n">4</span><div><h3>교수 상담은 적게 쓰였지만 결정력이 큽니다</h3><p>입학상담은 1명에게만 쓰였지만, 그 1명에게는 결정을 만든 요인이었습니다. 홈페이지까지 와서 망설이는 사람에게 교수 상담을 연결하는 장치가 있으면 이탈을 줄일 수 있습니다.</p></div></div>
+      <div class="ins"><span class="n">5</span><div><h3>추천 의존은 “우리들만의 리그”라는 한계를 만듭니다</h3><p>HR 비종사자는 지인 말고는 정보를 얻을 곳이 없었다고 답했습니다. 커리어 전환(제2의 직업), 비HR 직무처럼 코칭 네트워크 밖의 잠재 수요는 현재 구조로는 닿지 않습니다. <q>외부에도 적극적인 홍보를 통해 코칭 저변 확대가 되어야 리코도 더 많은 발전이 있을 것</q></p></div></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="st-h">
+    <div class="sec-head">
+      <h2 id="st-h">모집전략</h2>
+      <p class="note">핵심 경로는 키우고, 교차점은 정비하고, 닿지 않던 층으로 넓히는 순서입니다.</p>
+    </div>
+    <div class="strat">
+      <article class="card">
+        <div class="who">키우기 · 지인 → 지인 경로</div>
+        <h3>동문·재학생 추천 제도 공식화</h3>
+        <ul>
+          <li>재학생·동문 “리코 앰버서더” 지정, 추천용 소개 자료(커리큘럼, 교수진, 졸업 후 진로) 제공</li>
+          <li>추천 입학 시 추천인·입학생 양쪽 장학 혜택 검토</li>
+          <li>재학생이 지인을 데려올 수 있는 공개 수업·특강 정례화</li>
+          <li>갤럽 강점코치 등 동문이 속한 코칭 커뮤니티를 추천 거점으로 관리</li>
+        </ul>
+        <p class="kpi-line"><b>측정</b> 지원서에 추천인 이름·기수 기입란을 추가해 추천 기여를 기수별로 집계</p>
+      </article>
+      <article class="card">
+        <div class="who">정비하기 · 교차점 1 홈페이지</div>
+        <h3>홈페이지를 결정 도구로 재구성</h3>
+        <ul>
+          <li>첫 화면에서 전공 구성, 졸업요건, 장학·학비, 상담 예약을 한 흐름으로 배치</li>
+          <li>“이런 분이 입학합니다” 재학생 사례(HR, 비HR, 커리어 전환자) 게재</li>
+          <li>추천받은 사람이 확인하러 오는 페이지임을 전제로 FAQ 구성</li>
+        </ul>
+        <p class="kpi-line"><b>측정</b> 페이지별 방문→상담 신청 비율, 장학 페이지 조회 수</p>
+      </article>
+      <article class="card">
+        <div class="who">정비하기 · 비용 장벽</div>
+        <h3>장학·학비 정보의 선제 공개</h3>
+        <ul>
+          <li>장학 종류, 금액, 선발 기준, 신청 시기를 모집 요강과 홈페이지에 표로 공개</li>
+          <li>재직자·기업 연계 할인, 추천 장학 등 유형 다양화 검토</li>
+          <li>설명회와 상담에서 장학 안내를 기본 순서로 포함</li>
+        </ul>
+        <p class="kpi-line"><b>측정</b> 비추천 유입 지원자의 등록률, 상담 중 장학 문의 비중</p>
+      </article>
+      <article class="card">
+        <div class="who">정비하기 · 교차점 3 입학상담</div>
+        <h3>교수 1:1 상담을 결정 단계에 배치</h3>
+        <ul>
+          <li>홈페이지·설명회 이후 단계에 “교수와 20분 상담” 예약 버튼 상시 노출</li>
+          <li>상담 시간대를 모집 마감 4주 전부터 확대</li>
+          <li>상담 후 망설임 요인을 기록해 다음 기수 안내 자료에 반영</li>
+        </ul>
+        <p class="kpi-line"><b>측정</b> 상담자 중 지원·등록 비율</p>
+      </article>
+      <article class="card" style="grid-column:1/-1">
+        <div class="who">넓히기 · 닿지 않던 층</div>
+        <h3>코칭 네트워크 밖으로 채널 확장</h3>
+        <ul>
+          <li>HR insight 등 인사관리 매체에 “업무에 바로 쓰는 코칭 리더십” 기고·사례 콘텐츠 게재 (업무 연관성으로 결정한 입학생 사례 활용)</li>
+          <li>커리어 전환·제2의 직업을 고민하는 층을 위한 설명회 트랙 신설</li>
+          <li>기업 HRD 부서와 연계해 재직자 단체 설명회 운영</li>
+        </ul>
+        <p class="kpi-line"><b>측정</b> 지인 외 채널 유입 비중 (현재 30%)의 기수별 변화</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="lim-h">
+    <div class="sec-head"><h2 id="lim-h">해석의 한계와 다음 조사</h2></div>
+    <div class="limits">
+      <ul>
+        <li>한 기수 10명의 응답입니다. 경향을 보여주지만 통계적으로 일반화하기는 어렵습니다. 다음 기수 자료를 더해 같은 지도를 다시 그리면 패턴이 안정적인지 확인할 수 있습니다.</li>
+        <li>입학한 사람만 조사했습니다. 문의했지만 지원하지 않은 사람, 합격했지만 등록하지 않은 사람의 경로를 함께 모아야 경로별 실제 전환율(유효성)을 계산할 수 있습니다.</li>
+        <li>문항이 단일 선택이라 여러 채널을 함께 쓴 경우가 한 채널로 기록되었습니다. 복수 선택과 “추천인 기수” 문항을 추가하면 경로를 더 정확히 추적할 수 있습니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="raw-h">
+    <div class="sec-head"><h2 id="raw-h">응답별 경로</h2><p class="note">행에 마우스를 올리면 위 지도에서 해당 입학생의 경로가 강조됩니다. 이름은 가렸습니다.</p></div>
+    <div class="tbl-wrap">
+      <table id="raw">
+        <thead><tr><th>#</th><th>정보 획득</th><th>결정적 영향</th><th>결정 이유 (원문 요약)</th><th>건의사항</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const P = [
+ {id:1, a:"지인", b:"지인", c:"지인 추천·실경험", d:"응답 없음", why:"신뢰가 높은 지인의 추천 후 커리큘럼과 교수 전문성을 보고 결정", sug:"—"},
+ {id:2, a:"지인", b:"지인", c:"지인 추천·실경험", d:"응답 없음", why:"27기 동문 코치에게 설명을 듣고 결정", sug:"—"},
+ {id:3, a:"지인", b:"지인", c:"지인 추천·실경험", d:"응답 없음", why:"먼저 리코를 시작한 갤럽 강점코치 동기들의 도움", sug:"—"},
+ {id:4, a:"지인", b:"홈페이지", c:"다방면 교차검증", d:"응답 없음", why:"지인으로 처음 알고, 결정까지 여러 방면으로 알아봄", sug:"—"},
+ {id:5, a:"HR insight", b:"홈페이지", c:"상세한 공식정보", d:"장학·학비", why:"전공·졸업요건이 자세히 설명되어 있어 도움", sug:"다양한 장학제도"},
+ {id:6, a:"홈페이지", b:"입학상담", c:"교수 상담으로 해소", d:"장학·학비", why:"고현숙 교수 상담으로 해소", sug:"장학제도 사전 상세 소개"},
+ {id:7, a:"지인", b:"지인", c:"지인 추천·실경험", d:"외부 홍보 확대", why:"HR 비종사라 정보를 주로 지인에게서 얻음", sug:"외부 홍보로 코칭 저변 확대"},
+ {id:8, a:"지인", b:"지인", c:"지인 추천·실경험", d:"응답 없음", why:"다녀본 지인이 실제 경험을 바탕으로 추천", sug:"—"},
+ {id:9, a:"지인", b:"지인", c:"지인 추천·실경험", d:"응답 없음", why:"한국 정착 후 제2의 직업을 계획할 때 추천받음", sug:"—"},
+ {id:10,a:"홈페이지", b:"HR insight", c:"업무 연관성", d:"장학·학비", why:"업무에 접목·연관 지을 수 있을지 확인", sug:"학비 감면"},
+];
+const COLS = [
+ {key:"a", head:"① 정보 획득 경로", q:"Q1. 입학 정보를 주로 어디서?", order:["지인","홈페이지","HR insight"]},
+ {key:"b", head:"② 결정적 영향", q:"Q2. 결정에 가장 큰 영향은?", order:["지인","홈페이지","입학상담","HR insight"]},
+ {key:"c", head:"③ 결정 이유", q:"Q3. 이유 (유형화)", order:["지인 추천·실경험","다방면 교차검증","상세한 공식정보","교수 상담으로 해소","업무 연관성"]},
+ {key:"d", head:"④ 건의사항", q:"Q4. 건의 (유형화)", order:["응답 없음","외부 홍보 확대","장학·학비"]},
+];
+const ORIGIN = {"지인":"var(--s1)","홈페이지":"var(--s2)","HR insight":"var(--s3)"};
+const W=1120, H=470, TOP=64, U=30, GAP=22, NW=176;
+const xs=[0, 314, 628, 944];
+const NS="http://www.w3.org/2000/svg";
+const svg=document.getElementById("sankey");
+const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e};
+
+// nodes
+const nodes=COLS.map((c,ci)=>{
+  let y=TOP; const arr=[];
+  c.order.forEach(name=>{
+    const ppl=P.filter(p=>p[c.key]===name);
+    if(!ppl.length)return;
+    arr.push({name,ci,x:xs[ci],y,h:ppl.length*U,ppl,outOff:0,inOff:0});
+    y+=ppl.length*U+GAP;
+  });
+  return arr;
+});
+const idx=(ci,name)=>nodes[ci].findIndex(n=>n.name===name);
+
+// links grouped by (src,tgt), persons ordered consistently
+const bandsLayer=el("g",{});
+const arrowsLayer=el("g",{});
+const allBands=[];
+for(let ci=0;ci<3;ci++){
+  const k1=COLS[ci].key,k2=COLS[ci+1].key;
+  const groups={};
+  P.forEach(p=>{const g=p[k1]+"|"+p[k2];(groups[g]=groups[g]||[]).push(p)});
+  let links=Object.values(groups).map(ppl=>({s:nodes[ci][idx(ci,ppl[0][k1])],t:nodes[ci+1][idx(ci+1,ppl[0][k2])],ppl}));
+  links.forEach(l=>l.ppl.sort((a,b)=>COLS[0].order.indexOf(a.a)-COLS[0].order.indexOf(b.a)||a.id-b.id));
+  // source offsets: sort by target position
+  nodes[ci].forEach(n=>{links.filter(l=>l.s===n).sort((a,b)=>a.t.y-b.t.y).forEach(l=>{l.sy=n.y+n.outOff;n.outOff+=l.ppl.length*U})});
+  nodes[ci+1].forEach(n=>{links.filter(l=>l.t===n).sort((a,b)=>a.s.y-b.s.y).forEach(l=>{l.ty=n.y+n.inOff;n.inOff+=l.ppl.length*U})});
+  links.forEach(l=>{
+    const x0=l.s.x+NW, x1=l.t.x-2, h=l.ppl.length*U;
+    const ah=Math.min(22, 8+h*0.08); // arrow depth
+    const xe=x1-ah, mx=(x0+xe)/2;
+    l.ppl.forEach((p,k)=>{
+      const a=l.sy+k*U, b=l.ty+k*U;
+      const d=`M${x0},${a} C${mx},${a} ${mx},${b} ${xe},${b} L${xe},${b+U} C${mx},${b+U} ${mx},${a+U} ${x0},${a+U} Z`;
+      const path=el("path",{d,fill:ORIGIN[p.a],"fill-opacity":.55,class:"band",stroke:"var(--surface)","stroke-width":1},bandsLayer);
+      path.dataset.pid=p.id; allBands.push(path);
+    });
+    // aggregated arrowhead
+    const ids=l.ppl.map(p=>p.id);
+    const tri=el("path",{d:`M${xe},${l.ty-3} L${x1},${l.ty+h/2} L${xe},${l.ty+h+3} Z`,fill:"var(--ink-2)",class:"band"},arrowsLayer);
+    tri.dataset.pids=ids.join(",");
+    allBands.push(tri);
+    // hit + tooltip on whole link
+    const hit=el("path",{d:`M${x0},${l.sy} C${mx},${l.sy} ${mx},${l.ty} ${xe},${l.ty} L${x1},${l.ty+h/2} L${xe},${l.ty+h} C${mx},${l.ty+h} ${mx},${l.sy+h} ${x0},${l.sy+h} Z`,fill:"transparent",style:"cursor:pointer"},arrowsLayer);
+    hit.addEventListener("mousemove",e=>showTip(e,`<b>${l.s.name} → ${l.t.name}</b><br>${ids.length}명 (${ids.length*10}%)`));
+    hit.addEventListener("mouseenter",()=>highlight(ids,`${COLS[ci].head.slice(2)} ‘${l.s.name}’ → ${COLS[ci+1].head.slice(2)} ‘${l.t.name}’: ${ids.length}명의 전체 여정`));
+    hit.addEventListener("mouseleave",()=>{hideTip();applyFilter(current)});
+    // count label on thick links
+    if(ids.length>=2){const t=el("text",{x:mx,y:(l.sy+l.ty)/2+h/2+4,"text-anchor":"middle",class:"num","font-size":"13","font-weight":"600",fill:"var(--ink)"},arrowsLayer);t.textContent=ids.length+"명";t.style.pointerEvents="none"}
+  });
+}
+
+// column heads
+COLS.forEach((c,ci)=>{
+  el("text",{x:xs[ci],y:22,class:"col-head"}).textContent=c.head;
+  el("text",{x:xs[ci],y:40,class:"col-q"}).textContent=c.q;
+});
+// nodes
+nodes.flat().forEach(n=>{
+  const g=el("g",{style:"cursor:pointer"});
+  el("rect",{x:n.x,y:n.y,width:NW,height:n.h,rx:6,fill:"var(--node)"},g);
+  const cy=n.y+Math.min(n.h,U)/2+ (n.h>U? (n.h-U)/2:0);
+  const t=el("text",{x:n.x+10,y:cy+4.5,class:"node-label"},g);t.textContent=n.name;
+  const c=el("text",{x:n.x+NW-10,y:cy+4.5,class:"node-count","text-anchor":"end"},g);c.textContent=n.ppl.length;
+  const ids=n.ppl.map(p=>p.id);
+  g.addEventListener("mousemove",e=>showTip(e,`<b>${n.name}</b><br>${ids.length}명 (${ids.length*10}%)`));
+  g.addEventListener("mouseenter",()=>highlight(ids,`‘${n.name}’을 지난 ${ids.length}명의 전체 여정`));
+  g.addEventListener("mouseleave",()=>{hideTip();applyFilter(current)});
+});
+// crossing marker: 홈페이지 in cols 1,2
+[[0,"홈페이지"],[1,"홈페이지"]].forEach(([ci,name])=>{
+  const n=nodes[ci][idx(ci,name)];
+  el("rect",{x:n.x-4,y:n.y-4,width:NW+8,height:n.h+8,rx:9,fill:"none",stroke:"var(--hl-ink)","stroke-width":2,"stroke-dasharray":"5 4"});
+});
+const n1=nodes[1][idx(1,"홈페이지")];
+const lab=el("text",{x:n1.x+NW/2,y:n1.y-9,"text-anchor":"middle","font-size":"12","font-weight":"600",fill:"var(--hl-ink)"});lab.textContent="교차점 · 홈페이지";
+
+// highlight logic
+const sankeyWrap=svg;
+function highlight(ids,caption){
+  const set=new Set(ids.map(String));
+  svg.classList.add("dim");
+  allBands.forEach(b=>{
+    const own=b.dataset.pid?[b.dataset.pid]:b.dataset.pids.split(",");
+    b.classList.toggle("off",!own.some(i=>set.has(i)));
+  });
+  document.getElementById("cap").textContent=caption;
+}
+function clearHL(){svg.classList.remove("dim");allBands.forEach(b=>b.classList.remove("off"));document.getElementById("cap").textContent="전체 10명의 경로입니다."}
+const FILTERS={
+  all:null,
+  core:{ids:P.filter(p=>p.a==="지인"&&p.b==="지인").map(p=>p.id),cap:"핵심 경로 지인 → 지인: 6명. 결정 이유는 모두 추천·실경험이고, 건의사항은 1명(외부 홍보)을 빼면 없습니다."},
+  hub:{ids:P.filter(p=>p.a==="홈페이지"||p.b==="홈페이지").map(p=>p.id),cap:"홈페이지를 지난 4명: 지인 단독 경로 밖의 입학생 전원입니다."},
+  ext:{ids:P.filter(p=>p.a!=="지인").map(p=>p.id),cap:"지인 외 채널로 처음 알게 된 3명: 세 명 모두 장학·학비를 건의했습니다."},
+};
+let current="all";
+function applyFilter(f){const F=FILTERS[f];F?highlight(F.ids,F.cap):clearHL()}
+document.querySelectorAll(".toolbar button").forEach(b=>b.addEventListener("click",()=>{
+  current=b.dataset.f;
+  document.querySelectorAll(".toolbar button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  applyFilter(current);
+}));
+const tip=document.getElementById("tip");
+function showTip(e,html){tip.innerHTML=html;tip.hidden=false;tip.style.left=Math.min(e.clientX+14,innerWidth-300)+"px";tip.style.top=(e.clientY+14)+"px"}
+function hideTip(){tip.hidden=true}
+
+// raw table
+const tb=document.querySelector("#raw tbody");
+P.forEach(p=>{
+  const tr=document.createElement("tr");
+  tr.innerHTML=`<td class="num">${p.id}</td><td><span class="sw" style="background:${ORIGIN[p.a]}"></span>${p.a}</td><td>${p.b}</td><td>${p.why}</td><td>${p.sug}</td>`;
+  tr.addEventListener("mouseenter",()=>highlight([p.id],`응답자 ${p.id}: ${p.a} → ${p.b} → ${p.c} → ${p.d}`));
+  tr.addEventListener("mouseleave",()=>applyFilter(current));
+  tb.appendChild(tr);
+});
+</script>
+</body>
+</html>
